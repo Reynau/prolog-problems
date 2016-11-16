@@ -90,7 +90,8 @@ oneLecturePerRoom:-
   room(R),
   course(_,C,_,RS,_),
   member(R,RS),
-  findall(cls-C-L-S, slot(S), Lits),
+  slot(S),
+  findall(cls-C-L-S, lectureOfCourse(C,L), Lits),
   exactly(1,Lits),
   fail.
 oneLecturePerRoom.
