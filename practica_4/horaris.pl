@@ -49,33 +49,57 @@ afternoonSlotOfDay(D,S) :- between(7,12,H), S is (D-1)*12 + H. % given D, comput
 % ct-C-T    : course is taught by teacher T
 % cr-C-R    : course C is taught at room R
 % cls-C-L-S : lecture L of course C is given at slot S (slots between 1 and 60)
-% clt-C-L-T : lecture L of course C is taught by teacher T
-% clr-C-L-R : lecture L of course C is taught at room R
 
 writeClauses:-
     oneSlotPerLecture,
-    allLecturesSameTeacher,
     allLecturesSameRoom,
+    allLecturesSameTeacher,
+    oneLecturePerRoom,
     % Many more constraints are needed
     true.
+writeClauses.
 
 
 
+% all lectures of a course are taught at the same room
 allLecturesSameRoom:-
   course(C),
-  lectureOfCourse(C,L),
-  findall(clr-C-L-R, room(R), Lits),
+  course(_,C,_,RS,_),
+  findall(cr-C-R, member(R,RS), Lits),
   exactly(1,Lits),
   fail.
 allLecturesSameRoom.
 
+% all lectures of a course are taught by the same teacher
 allLecturesSameTeacher:-
   course(C),
-  lectureOfCourse(C,L),
-  findall(clt-C-L-T, teacher(T), Lits),
+  course(_,C,_,_,TS),
+  findall(ct-C-T, member(T,TS), Lits),
   exactly(1,Lits),
   fail.
 allLecturesSameTeacher.
+
+% a teacher cannot teach two lectures simultaneously
+teacherNotTwoLectSimult:-
+
+  fail.
+teacherNotTwoLectSimult.
+
+% it is not possible to hold two lectures at the same room simultaneously
+oneLecturePerRoom:-
+  room(R),
+  course(_,C,_,RS,_),
+  member(R,RS),
+  findall(cls-C-L-S, slot(S), Lits),
+  exactly(1,Lits),
+  fail.
+oneLecturePerRoom.
+
+% at most 5 lectures of a given year can be taught every day
+maxFiveLectOfYearPerDay:-
+
+  fail.
+maxFiveLectOfYearPerDay.
 
 oneSlotPerLecture:-
     course(C),
