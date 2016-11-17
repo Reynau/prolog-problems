@@ -25,6 +25,7 @@ symbolicOutput(0). % set to 1 to see symbolic output only; 0 otherwise.
 %  - a teacher cannot teach two lectures simultaneously
 %  - at most 5 lectures of a given year can be taught every day
 %  - two lectures belonging to the same year cannot be taught at the same time
+
 %
 %  File displaySol.pl contains the predicate drawSchedule, which will output
 %  the resulting schedule in a readable format. If your code is incorrect and
@@ -45,37 +46,73 @@ slotOfDay(D,S)          :- hour(H), S is (D-1)*12 + H. % given D, computes S
 morningSlotOfDay(D,S)   :- between(1,6,H),  S is (D-1)*12 + H. % given D, computes S
 afternoonSlotOfDay(D,S) :- between(7,12,H), S is (D-1)*12 + H. % given D, computes S
 
+%%%%%
+teacherOfCourse(C,T) :- course(_,C,_,_,TS), member(T,TS).
+roomOfCourse(C,R)    :- course(_,C,_,RS,_), member(R,RS).
+
+morningSlot(S)       :- slot(S), H is (S - 1) mod 12, between(0,5,H).
+afternoonSlot(S)     :- slot(S), H is (S - 1) mod 12, between(6,11,H).
+slotAt(morning,S)    :- morningSlot(S).
+slotAt(afternoon,S)  :- afternoonSlot(S).
+courseAt(F,C)        :- year(F,Y), course(Y,C,_,_,_).
+inverseAt(morning,afternoon).
+inverseAt(afternoon, morning).
+slotOfDayAt(D,morning,S) :- morningSlotOfDay(D,S).
+slotOfDayAt(D,afternoon,S) :- afternoonSlotOfDay(D,S).
+%%%%%
+
 %%%%%%  Variables: It is mandatory to use AT LEAST these variables!
 % ct-C-T    : course is taught by teacher T
 % cr-C-R    : course C is taught at room R
 % cls-C-L-S : lecture L of course C is given at slot S (slots between 1 and 60)
-% clt-C-L-T : lecture L of course C is taught by teacher T
-% clr-C-L-R : lecture L of course C is taught at room R
 
 writeClauses:-
     oneSlotPerLecture,
-    allLecturesSameTeacher,
-    allLecturesSameRoom,
+    eachCourseHasAtMostOneLectPerDay, % no funciona bien
+    courseOfYearOnlyMorningOrEvening, % esta negado, el normal no funciona
+    allLectSameTeacher,
+    allLectSameRoom,
+    notTwoLecturesSameRoomSimult,
     % Many more constraints are needed
     true.
 
-
-
-allLecturesSameRoom:-
-  course(C),
-  lectureOfCourse(C,L),
-  findall(clr-C-L-R, room(R), Lits),
-  exactly(1,Lits),
+notTwoLecturesSameRoomSimult:-
+  slot(S),
+  findall(cls-C-_-S, course(C), Lits),
+  atMost(1,Lits),
   fail.
-allLecturesSameRoom.
+notTwoLecturesSameRoomSimult.
 
-allLecturesSameTeacher:-
-  course(C),
-  lectureOfCourse(C,L),
-  findall(clt-C-L-T, teacher(T), Lits),
-  exactly(1,Lits),
+courseOfYearOnlyMorningOrEvening:-
+  year(Y,F),
+  course(Y,C,N,_,_),
+  inverseAt(F,IF),
+  findall(cls-C-L-S, (between(1,N,L), slotAt(IF,S)), Lits),
+  exactly(0,Lits),
   fail.
-allLecturesSameTeacher.
+courseOfYearOnlyMorningOrEvening.
+
+eachCourseHasAtMostOneLectPerDay:-
+  course(C),
+  day(D),
+  findall(cls-C-L-S, (slotOfDay(D,S), lectureOfCourse(C,L)), Lits),
+  atMost(1,Lits),
+  fail.
+eachCourseHasAtMostOneLectPerDay.
+
+allLectSameTeacher:-
+    course(C),
+    findall(ct-C-T, teacherOfCourse(C,T), Lits),
+    exactly(1,Lits),
+    fail.
+allLectSameTeacher.
+
+allLectSameRoom:-
+    course(C),
+    findall(cr-C-R, roomOfCourse(C,R), Lits),
+    exactly(1,Lits),
+    fail.
+allLectSameRoom.
 
 oneSlotPerLecture:-
     course(C),
