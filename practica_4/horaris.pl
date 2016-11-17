@@ -68,11 +68,11 @@ slotOfDayAt(D,afternoon,S) :- afternoonSlotOfDay(D,S).
 
 writeClauses:-
     oneSlotPerLecture,
-    eachCourseHasAtMostOneLectPerDay, % no funciona bien
+    eachCourseHasAtMostOneLectPerDay,
     courseOfYearOnlyMorningOrEvening, % esta negado, el normal no funciona
     allLectSameTeacher,
     allLectSameRoom,
-    notTwoLecturesSameRoomSimult,
+    notTwoLecturesSameRoomSimult, % no funciona bien
     % Many more constraints are needed
     true.
 
