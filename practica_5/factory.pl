@@ -24,22 +24,22 @@ duration(T,D):-        task(T,D,_).
 usesResource(T,R):-    task(T,_,L), member(R,L).
 
 % We use the following types of symbolic propositional variables:
-%   1. start-T-H means:  "task T starts at hour H"     (MANDATORY)
-%   2. ....
+%   1. start-T-H   means:  "task T starts at hour H"     (MANDATORY)
+%   2. hour-H-T-R  means:  "hour H has task T"
 
 writeClauses(Time):- 
     initClauseGeneration,
     eachTaskStartsOnce(Time),
     true,!.
-
+    
 eachTaskStartsOnce(Time):-
     task(T),
     duration(T,D),
-    lastHour is Time - D + 1,
-    findall(start-T-H, between(1,lastHour,H), Lits),
-    exact(1, Lits),
+    LastHour is Time - D,
+    findall(start-T-H, between(1,LastHour,H), Lits),
+    exactly(1,Lits),
     fail.
-eachTaskStartsOnce.
+eachTaskStartsOnce(_).
 
 %%%%%%%%%%%%%%%%%%%%% Auxiliary predicates for displaying the solutions and for counting the hours used:
 
@@ -75,6 +75,7 @@ main:-
     write('Looking for initial plan that may take the whole week (168h).'), nl,
     write('Launching picosat...'), nl,
     shell('picosat -v -o model infile.cnf', Result),  % if sat: Result=10; if unsat: Result=20.
+    write('picosat ok with result '),write(Result),nl,
     treatResult(Result,[]),!.
 
 treatResult(20,[]       ):- write('No solution exists.'), nl, halt.
