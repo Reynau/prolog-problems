@@ -35,9 +35,9 @@ writeClauses(Time):-
 eachTaskStartsOnce(Time):-
     task(T),
     duration(T,D),
-    lastHour is Time - D,
+    lastHour is Time - D + 1,
     findall(start-T-H, between(1,lastHour,H), Lits),
-    exactly(1, Lits),
+    exact(1, Lits),
     fail.
 eachTaskStartsOnce.
 
