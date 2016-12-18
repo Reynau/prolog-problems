@@ -11,9 +11,6 @@ symbolicOutput(0). % set to 1 to see symbolic output only; 0 otherwise.
 %% have 168 hours (numbered from 1 to 168) for all tasks, but we want to
 %% finish all tasks as soon as possible.
 
-% noExceedResources  means: At hour H, cannot be used more resorces than availables
-% eachTaskStartsOnce means: Each task is started only eachTaskStartsOnce
-
 %%%%%%%%%%%%%%%%%%%%%%% Input. %%%%%%%  
 %% format:
 %% task( taskID, Duration, ListOFResourcesUsed ).
@@ -39,28 +36,28 @@ writeClauses(Time):-
     true,!.
     
 generateNewVariable(Time):-
-    task(T,D,L),            % Task T with duration D and resources L
-    member(R,L),            % R is a resource of L
-    LastHour is Time - D + 1,   % Last possible hour to start
-    between(1,LastHour,H),  % H is startHour
-    FinishHour is H + D - 1,
+    task(T,D,L),                    % Task T with duration D and resources L
+    member(R,L),                    % R is a resource of L
+    LastHour is Time - D + 1,       % Last possible hour to start
+    between(1,LastHour,H),          % H is startHour
+    FinishHour is H + D - 1,        % Hour that task finish if starts at H
     findall(task-T-H1-R, between(H,FinishHour,H1), Lits), % From startHour to finishHour
     expressAnd(start-T-H, Lits),
     fail.
 generateNewVariable(_).
     
 noExceedResources(Time):-
-    between(1,Time,H), % hour(H)
-    resourceUnits(R,N),
+    between(1,Time,H),      % hour(H)
+    resourceUnits(R,N),     % Resource R has N units
     findall(task-T-H-R, usesResource(T,R), Lits),
     atMost(N,Lits),
     fail.
 noExceedResources(_).
     
 eachTaskStartsOnce(Time):-
-    task(T),
-    duration(T,D),
-    LastHour is Time - D + 1,
+    task(T),                    % Task T
+    duration(T,D),              % With duration D
+    LastHour is Time - D + 1,   % Calculates last possible hour to start
     findall(start-T-H, between(1,LastHour,H), Lits),
     exactly(1,Lits),
     fail.
