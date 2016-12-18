@@ -1,1 +1,2 @@
-# prolog-problems
+# Prolog Problems
+Prolog deriverables for Logic subject.
