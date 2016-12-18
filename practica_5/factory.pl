@@ -11,31 +11,56 @@ symbolicOutput(0). % set to 1 to see symbolic output only; 0 otherwise.
 %% have 168 hours (numbered from 1 to 168) for all tasks, but we want to
 %% finish all tasks as soon as possible.
 
+% noExceedResources  means: At hour H, cannot be used more resorces than availables
+% eachTaskStartsOnce means: Each task is started only eachTaskStartsOnce
+
 %%%%%%%%%%%%%%%%%%%%%%% Input. %%%%%%%  
 %% format:
 %% task( taskID, Duration, ListOFResourcesUsed ).
 %% resource( resourceID, NumUnitsAvailable ).
-:-include(easy152).  % simple input example file. Try the two given harder ones too!
+:-include(hardmayBe147).  % simple input example file. Try the two given harder ones too!
 
 %%%%%% Some helpful definitions to make the code cleaner:
 
 task(T):-              task(T,_,_).
+resource(R):-          resourceUnits(R,_).
 duration(T,D):-        task(T,D,_).
 usesResource(T,R):-    task(T,_,L), member(R,L).
 
 % We use the following types of symbolic propositional variables:
 %   1. start-T-H   means:  "task T starts at hour H"     (MANDATORY)
-%   2. hour-H-T-R  means:  "hour H has task T"
+%   2. task-T-H-R  means:  "task T at hour H use resource R"
 
 writeClauses(Time):- 
     initClauseGeneration,
     eachTaskStartsOnce(Time),
+    generateNewVariable(Time),
+    noExceedResources(Time),
     true,!.
+    
+generateNewVariable(Time):-
+    task(T,D,L),            % Task T with duration D and resources L
+    member(R,L),            % R is a resource of L
+    LastHour is Time - D + 1,   % Last possible hour to start
+    between(1,LastHour,H),  % H is startHour
+    FinishHour is H + D - 1,
+    findall(task-T-H1-R, between(H,FinishHour,H1), Lits), % From startHour to finishHour
+    expressAnd(start-T-H, Lits),
+    fail.
+generateNewVariable(_).
+    
+noExceedResources(Time):-
+    between(1,Time,H), % hour(H)
+    resourceUnits(R,N),
+    findall(task-T-H-R, usesResource(T,R), Lits),
+    atMost(N,Lits),
+    fail.
+noExceedResources(_).
     
 eachTaskStartsOnce(Time):-
     task(T),
     duration(T,D),
-    LastHour is Time - D,
+    LastHour is Time - D + 1,
     findall(start-T-H, between(1,LastHour,H), Lits),
     exactly(1,Lits),
     fail.
